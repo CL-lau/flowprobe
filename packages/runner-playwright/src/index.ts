@@ -1,5 +1,5 @@
 import { loadPluginBundle } from '../../plugins/src/bundle.js';
-import { spawn } from 'node:child_process';
+import { runProcess } from '../../core/src/process.js';
 import { randomUUID } from 'node:crypto';
 import { mkdir, readdir, writeFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
@@ -31,9 +31,13 @@ export async function runPlan(
   );
   const require = createRequire(import.meta.url);
   const cli = require.resolve('@playwright/test/cli');
-  let spawnError: Error | undefined;
-  const child = spawn(process.execPath, [cli, 'test', '--config', configPath], {
+  const {
+    exitCode,
+    error: spawnError,
+    cancelled,
+  } = await runProcess(process.execPath, [cli, 'test', '--config', configPath], {
     stdio: 'inherit',
+    ...(options.signal ? { signal: options.signal } : {}),
     env: {
       ...process.env,
       FLOWPROBE_PLAN: planPath,
@@ -41,19 +45,6 @@ export async function runPlan(
       FLOWPROBE_RUN_ID: runId,
     },
   });
-  const cancel = (): void => {
-    child.kill('SIGTERM');
-  };
-  options.signal?.addEventListener('abort', cancel, { once: true });
-  if (options.signal?.aborted) cancel();
-  const exitCode = await new Promise<number | null>((resolveExit) => {
-    child.once('error', (error) => {
-      spawnError = error;
-      resolveExit(null);
-    });
-    child.once('close', (code) => resolveExit(code));
-  });
-  options.signal?.removeEventListener('abort', cancel);
   const results: CaseResult[] = [];
   const resultsDir = safePath(output, 'results');
   try {
@@ -63,7 +54,7 @@ export async function runPlan(
     if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
   }
   const gate = evaluateGate(plan, results);
-  if (options.signal?.aborted) {
+  if (cancelled || options.signal?.aborted) {
     gate.passed = false;
     gate.exitCode = 4;
     gate.reasons.push('CANCELLED');
