@@ -1,0 +1,25 @@
+apiVersion: flowprobe/v1
+kind: TestCase
+id: permissions.viewer
+owner: simulation
+requirements: [AUTH-001]
+risk: critical
+steps:
+  - id: open
+    action: { type: navigate, path: '/permissions?role=viewer' }
+assertions:
+  - id: role
+    after: open
+    type: dom.text
+    target: { testId: permission }
+    expected: { equals: 只读访问 }
+  - id: no-edit
+    after: open
+    type: dom.count
+    target: { role: button, name: 修改订单 }
+    expected: 0
+  - id: forbidden
+    after: open
+    type: api
+    path: /api/permission
+    expected: { status: 403, fields: { canEdit: false } }

@@ -1,0 +1,23 @@
+apiVersion: flowprobe/v1
+kind: TestCase
+id: canvas.midscene
+owner: simulation
+requirements: [CANVAS-NATIVE-001]
+steps:
+  - id: open
+    action: { type: navigate, path: /canvas }
+  - id: add-node
+    action:
+      type: intent
+      text: 流程画布的中央空白位置
+      scope: { component: workflow }
+      strategy: [approved-replay, midscene.locate]
+    verifies: [canvas.count]
+assertions:
+  - id: canvas.count
+    after: add-node
+    type: dom.text
+    target: { testId: node-count }
+    expected: { equals: '节点数：1' }
+policy:
+  model: { maxCalls: 3, maxCostUsd: 0.10 }

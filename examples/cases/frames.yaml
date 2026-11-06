@@ -1,0 +1,23 @@
+apiVersion: flowprobe/v1
+kind: TestCase
+id: frames.shadow
+owner: simulation
+requirements: [EMBEDDED-001]
+steps:
+  - id: open
+    action: { type: navigate, path: /frames }
+  - id: frame
+    action: { type: fill, target: { frame: iframe, label: 审批意见 }, value: 审批通过 }
+  - id: shadow
+    action: { type: fill, target: { label: 组件备注 }, value: 影子组件输入成功 }
+assertions:
+  - id: frame.value
+    after: frame
+    type: dom.value
+    target: { frame: iframe, label: 审批意见 }
+    expected: 审批通过
+  - id: shadow.value
+    after: shadow
+    type: dom.value
+    target: { label: 组件备注 }
+    expected: 影子组件输入成功

@@ -1,0 +1,36 @@
+apiVersion: flowprobe/v1
+kind: TestCase
+id: orders.intent
+owner: order-team
+requirements: [ORDER-001]
+risk: critical
+fixtures:
+  order: { provider: company.orderDraft, version: '1', isolation: attempt }
+steps:
+  - id: open
+    action: { type: navigate, path: /orders }
+  - id: create
+    preconditions: [orders.pageReady]
+    action:
+      type: intent
+      text: 创建一笔金额为 100 元、标题为指定标题的订单
+      inputs: { title: '${fixtures.order.title}' }
+      scope: { component: order-create-dialog }
+      strategy: [approved-replay, company.createOrder]
+      effect: non-idempotent
+      operationKey: '${fixtures.order.operationKey}'
+    verifies: [order.row, order.persisted]
+assertions:
+  - id: order.row
+    after: create
+    type: dom.text
+    target: { testId: order-row, matchText: '${fixtures.order.title}' }
+    expected: { contains: '100.00' }
+  - id: order.persisted
+    after: create
+    type: plugin
+    plugin: company.order.persisted
+    input:
+      expectedTitle: '${fixtures.order.title}'
+      expectedAmountMinor: 10000
+cleanup: { provider: fixtures, required: true }

@@ -1,0 +1,17 @@
+node_modules/
+dist/
+.flowprobe/
+artifacts/
+test-results/
+playwright-report/
+coverage/
+.env
+.env.*
+!.env.example
+.DS_Store
+
+midscene_run/
+
+# Local design documents and IDE settings
+/docs/
+.idea/

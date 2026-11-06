@@ -1,0 +1,29 @@
+apiVersion: flowprobe/v1
+kind: TestCase
+id: orders.create
+owner: simulation
+requirements: [ORDER-001]
+risk: critical
+steps:
+  - id: open
+    action: { type: navigate, path: /orders }
+  - id: title
+    action: { type: fill, target: { label: 订单标题 }, value: 仿真采购订单 }
+  - id: amount
+    action: { type: fill, target: { label: 金额（元） }, value: '100' }
+  - id: submit
+    action: { type: click, target: { role: button, name: 提交订单 }, effect: non-idempotent }
+    verifies: [order.ui, order.persisted]
+assertions:
+  - id: order.ui
+    after: submit
+    type: dom.text
+    target: { testId: order-row, matchText: 仿真采购订单 }
+    expected: { contains: '100.00' }
+  - id: order.persisted
+    after: submit
+    type: api
+    path: /api/orders
+    expected:
+      status: 200
+      fields: { total: 1, orders.0.title: 仿真采购订单, orders.0.amountMinor: 10000 }

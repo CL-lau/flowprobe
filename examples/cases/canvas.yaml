@@ -1,0 +1,25 @@
+apiVersion: flowprobe/v1
+kind: TestCase
+id: canvas.graph
+owner: simulation
+requirements: [CANVAS-001]
+steps:
+  - id: open
+    action: { type: navigate, path: /canvas }
+  - id: first
+    action: { type: click, target: { role: button, name: 添加审批节点 } }
+  - id: second
+    action: { type: click, target: { role: button, name: 添加审批节点 } }
+  - id: save
+    action: { type: click, target: { role: button, name: 保存流程 } }
+assertions:
+  - id: count
+    after: second
+    type: dom.text
+    target: { testId: node-count }
+    expected: { equals: '节点数：2' }
+  - id: graph
+    after: save
+    type: dom.text
+    target: { testId: saved-graph }
+    expected: { equals: '{"nodes":["审批 1","审批 2"],"edges":1}' }

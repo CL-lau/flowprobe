@@ -1,0 +1,30 @@
+apiVersion: flowprobe/v1
+kind: TestCase
+id: controls.async
+owner: simulation
+requirements: [CONTROLS-001]
+steps:
+  - id: open
+    action: { type: navigate, path: /controls }
+  - id: search
+    action: { type: fill, target: { label: 搜索项目 }, value: 华东 }
+  - id: range
+    action: { type: select, target: { label: 日期范围 }, value: month }
+  - id: filter
+    action: { type: check, target: { label: 仅显示异常 }, checked: true }
+assertions:
+  - id: results
+    after: search
+    type: dom.text
+    target: { testId: results }
+    expected: { equals: 华东采购 }
+  - id: range.value
+    after: range
+    type: dom.text
+    target: { testId: range }
+    expected: { equals: 本月 }
+  - id: filter.value
+    after: filter
+    type: dom.text
+    target: { testId: filter }
+    expected: { equals: 异常项目 }
