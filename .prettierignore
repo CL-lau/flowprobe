@@ -5,3 +5,5 @@ artifacts/
 playwright-report/
 test-results/
 docs/design/
+drop/
+browser-use-incomplete/

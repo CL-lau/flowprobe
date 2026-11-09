@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'none'"
+    />
+    <title>FlowProbe</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <header class="titlebar">
+      <div class="brand">
+        <img class="brand-image" src="../../../assets/icon.png" alt="" /> FlowProbe
+        <span class="version">DESKTOP</span>
+      </div>
+      <div class="window-caption">任务终端 · 实时浏览器</div>
+      <button id="settings-open" class="title-action" aria-label="设置">⚙ 设置</button>
+      <button id="toggle" class="title-action" title="展开或收起浏览器">浏览器侧栏 ◧</button>
+    </header>
+    <div class="workspace">
+      <aside class="task-pane">
+        <div class="session-head">
+          <div>
+            <span class="eyebrow">WORKSPACE</span>
+            <h1>让任务发生。</h1>
+          </div>
+          <span class="live-dot" id="live-dot"></span>
+        </div>
+        <div class="conversation" id="conversation">
+          <div id="welcome" class="welcome">
+            <div class="prompt-glyph">›_</div>
+            <h2>从一句任务开始</h2>
+            <p>告诉我目标。你可以在右侧查看操作，<br />也可以随时接管浏览器，亲自完成登录。</p>
+            <button class="example" id="example">
+              <span>↗</span>
+              <div>试试填写一个表单<small>打开演示页，填写、选择并提交</small></div>
+              <span>→</span>
+            </button>
+            <div class="capabilities">
+              <span>◎ 浏览器任务</span><span>⌘ 整个电脑</span><span>⇄ 随时接管</span>
+            </div>
+          </div>
+          <div id="messages"></div>
+          <div id="timeline" class="timeline"></div>
+        </div>
+        <div id="handoff" class="handoff hidden">
+          <strong>现在由你操作</strong>
+          <p>自动操作已暂停。请在右侧完成登录或验证，完成后继续。</p>
+          <button id="resume" class="primary">继续执行 →</button>
+        </div>
+        <div id="error" class="error hidden" role="alert"></div>
+        <div class="composer-area">
+          <div class="task-controls">
+            <label class="mode-picker"
+              ><span id="mode-icon">◎</span
+              ><select id="mode" aria-label="执行模式">
+                <option value="browser">浏览器任务</option>
+                <option value="desktop">整个电脑</option>
+              </select></label
+            ><span class="model" id="model">gpt-6-luna</span>
+          </div>
+          <div class="composer">
+            <span class="input-prefix">›</span
+            ><textarea
+              id="task"
+              aria-label="任务内容"
+              placeholder="描述任务，或贴一个网址…"
+              rows="3"
+            ></textarea
+            ><button id="run" title="执行任务" aria-label="执行任务">↑</button>
+          </div>
+          <div class="composer-meta">
+            <span>⌘ / Ctrl + Enter 执行</span><button id="permissions">系统权限 ↗</button>
+          </div>
+          <div class="run-controls">
+            <button id="pause" disabled>⇄ 我来操作 / 登录</button
+            ><button id="stop" class="stop" disabled>■ 停止</button
+            ><button id="artifacts" disabled>执行记录 ↗</button>
+          </div>
+          <div id="permission-state" class="permission-state"></div>
+          <section
+            id="permission-panel"
+            class="permission-panel hidden"
+            aria-label="快速添加系统权限"
+          >
+            <strong>让 FlowProbe 控制整个电脑</strong>
+            <p>
+              点击下方按钮，自动打开权限页，并在访达选中驱动
+              App。把它拖入权限列表并开启即可；路径也已复制，可在添加对话框按 ⌘⇧G 后粘贴。
+            </p>
+            <div>
+              <button id="quick-accessibility">① 添加辅助功能 ↗</button
+              ><button id="quick-screen">② 添加屏幕录制 ↗</button>
+            </div>
+            <small>授权对象：FlowProbe Driver.app。最终确认由 macOS 完成。</small>
+          </section>
+          <button
+            id="show-driver"
+            class="refresh-permissions"
+            title="在 Finder 中定位需要授权的原生驱动"
+          >
+            定位驱动文件
+          </button>
+          <button id="show-client" class="refresh-permissions">定位客户端</button>
+          <button id="refresh-permissions" class="refresh-permissions">刷新权限状态</button>
+        </div>
+      </aside>
+      <section class="browser-pane" id="browser-pane">
+        <div class="browser-toolbar">
+          <div class="browser-heading">
+            <span class="surface-icon" id="surface-icon">◎</span
+            ><span id="surface-title">浏览器</span><span class="persistent">本地会话</span>
+          </div>
+          <div class="navigation">
+            <button id="back" aria-label="后退">←</button
+            ><button id="forward" aria-label="前进">→</button
+            ><button id="reload" aria-label="刷新">↻</button>
+            <form id="address-form">
+              <span>↗</span
+              ><input
+                id="url"
+                aria-label="网页地址"
+                placeholder="输入网址，打开页面或登录"
+              /><button type="submit" id="open">打开</button>
+            </form>
+          </div>
+        </div>
+        <div class="browser-placeholder" id="placeholder">
+          <div class="browser-sketch">
+            <div><i></i><i></i><i></i></div>
+            <span>↗</span>
+          </div>
+          <h2>一个可亲自操作的浏览器</h2>
+          <p>提交任务时，这里会展开真实页面。<br />你也可以先打开网站登录，再把任务交给我。</p>
+          <button id="open-example" class="outline">打开演示页面 ↗</button
+          ><span class="placeholder-note">独立的本地浏览器会话 · 登录状态可复用</span>
+        </div>
+        <div class="desktop-preview hidden" id="desktop-preview">
+          <img id="desktop-image" alt="整个电脑的当前执行画面" />
+          <div id="desktop-empty">
+            <span>⌘</span>
+            <h2>整个电脑</h2>
+            <p>任务会通过原生鼠标和键盘操作应用。<br />请先授予辅助功能和屏幕录制权限。</p>
+          </div>
+        </div>
+      </section>
+    </div>
+    <section id="settings-panel" class="settings-panel hidden" aria-label="设置">
+      <div class="settings-card">
+        <div class="settings-header">
+          <div>
+            <span class="eyebrow">PREFERENCES</span>
+            <h2>设置</h2>
+          </div>
+          <button id="settings-close" aria-label="关闭设置">✕</button>
+        </div>
+        <p>设置保存在本机，任务开始时生效。</p>
+        <form id="settings-form">
+          <label>模型名称<input id="setting-model" required maxlength="100" /></label
+          ><label>API 基地址<input id="setting-base" type="url" required /></label
+          ><label
+            >OpenAI API Key<input
+              id="setting-key"
+              type="password"
+              autocomplete="off"
+              placeholder="留空以保留现有密钥或使用环境变量" /></label
+          ><small>密钥通过系统安全存储加密；界面不会显示已保存的密钥。</small
+          ><label
+            >最大执行轮数<input
+              id="setting-turns"
+              type="number"
+              min="1"
+              max="200"
+              required /></label
+          ><label class="setting-check"
+            ><input id="setting-vision" type="checkbox" /> 向模型提供浏览器截图</label
+          >
+          <div id="settings-error" role="alert"></div>
+          <div class="settings-actions">
+            <button id="settings-cancel" type="button">取消</button
+            ><button type="submit" class="primary">保存设置</button>
+          </div>
+        </form>
+      </div>
+    </section>
+    <footer>
+      <div>
+        <span class="status-dot" id="status-dot"></span><span id="status">正在启动客户端…</span
+        ><span id="calls"></span>
+      </div>
+      <span id="elapsed"></span
+      ><span>⌘⇧. 紧急停止 <span class="footer-separator">/</span> 登录信息保存在本机</span>
+    </footer>
+    <script src="renderer.js"></script>
+  </body>
+</html>

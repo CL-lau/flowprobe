@@ -1,43 +1,40 @@
 {
   "name": "flowprobe",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
-  "description": "Contract-driven hybrid web testing platform",
+  "description": "Direct browser task execution",
   "engines": {
     "node": ">=22.12.0"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.build.json && tsx scripts/copy-assets.ts",
+    "flowprobe": "tsx src/cli.ts",
+    "start": "npm run build && node scripts/start-desktop.mjs",
+    "build": "tsc -p tsconfig.build.json && node scripts/copy-desktop.mjs && node scripts/prepare-native-driver.mjs",
     "typecheck": "tsc --noEmit",
-    "test": "tsx --test tests/unit/*.test.ts",
-    "test:acceptance": "playwright test",
+    "test": "tsx --test tests/*.test.ts",
+    "test:acceptance": "tsx --test tests/browser.test.ts",
+    "format": "prettier --write \"src/**/*.ts\" \"src/desktop/ui/*\" \"src/desktop/preload.cjs\" \"tests/**/*.ts\" \"scripts/*.mjs\"",
+    "format:check": "prettier --check \"src/**/*.ts\" \"src/desktop/ui/*\" \"src/desktop/preload.cjs\" \"tests/**/*.ts\" \"scripts/*.mjs\"",
     "check": "npm run format:check && npm run typecheck && npm test && npm run build",
-    "flowprobe": "tsx packages/cli/src/main.ts",
-    "simulator": "tsx examples/simulator/server.ts",
-    "format": "prettier --write \"packages/**/*.ts\" \"examples/**/*.ts\" \"tests/**/*.ts\" \"scripts/**/*.ts\" \"*.config.ts\"",
-    "format:check": "prettier --check \"packages/**/*.ts\" \"examples/**/*.ts\" \"tests/**/*.ts\" \"scripts/**/*.ts\" \"*.config.ts\""
+    "desktop": "npm run build && node scripts/start-desktop.mjs",
+    "task": "tsx src/cli.ts task",
+    "test:desktop": "npm run build && tsx --test tests/desktop.e2e.ts",
+    "dmg": "npm run build && node scripts/create-icon.mjs && node scripts/package-dmg.mjs"
   },
   "dependencies": {
     "@playwright/test": "1.65.0",
+    "agent-desktop": "1.2.0",
     "commander": "15.0.0",
-    "esbuild": "0.28.2",
-    "yaml": "2.9.1",
+    "undici": "7.30.2",
     "zod": "4.6.7"
   },
   "devDependencies": {
     "@types/node": "26.6.6",
+    "electron": "45.2.3",
     "prettier": "3.9.10",
     "tsx": "4.23.15",
     "typescript": "7.0.2"
   },
-  "optionalDependencies": {
-    "@midscene/web": "1.17.7"
-  },
-  "overrides": {
-    "js-yaml": "4.3.2",
-    "uuid": "11.1.1",
-    "sharp": "0.35.5",
-    "basic-ftp": "6.2.6"
-  }
+  "main": "dist/desktop/main.js"
 }

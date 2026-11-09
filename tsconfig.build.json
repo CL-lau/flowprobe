@@ -1,1 +1,6 @@
-{"extends":"./tsconfig.json","include":["packages/**/*.ts","examples/**/*.ts"],"exclude":["tests","node_modules","dist"]}
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": { "rootDir": "src" },
+  "include": ["src/**/*.ts"],
+  "exclude": ["tests", "drop", "node_modules"]
+}

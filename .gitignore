@@ -6,6 +6,7 @@ test-results/
 playwright-report/
 coverage/
 .env
+model.config.json
 .env.*
 !.env.example
 .DS_Store
@@ -14,4 +15,8 @@ midscene_run/
 
 # Local design documents and IDE settings
 /docs/
+/drop/docs/
 .idea/
+
+build/
+release/

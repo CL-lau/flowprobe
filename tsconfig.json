@@ -8,9 +8,6 @@
     "exactOptionalPropertyTypes": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "resolveJsonModule": true,
-    "forceConsistentCasingInFileNames": true,
-    "noFallthroughCasesInSwitch": true,
     "outDir": "dist",
     "rootDir": ".",
     "declaration": true,
@@ -20,10 +17,7 @@
     ]
   },
   "include": [
-    "packages/**/*.ts",
-    "examples/**/*.ts",
-    "tests/**/*.ts",
-    "*.config.ts",
-    "scripts/**/*.ts"
+    "src/**/*.ts",
+    "tests/**/*.ts"
   ]
 }
