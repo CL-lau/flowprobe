@@ -7,7 +7,6 @@ import {
   session,
   shell,
   clipboard,
-  safeStorage,
   nativeImage,
 } from 'electron';
 import { chromium, type Browser, type Page } from '@playwright/test';
@@ -16,6 +15,8 @@ import { mkdirSync, writeFileSync, existsSync } from 'node:fs';
 import { resolve, join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { randomUUID } from 'node:crypto';
+import { execFile } from 'node:child_process';
+import { promisify } from 'node:util';
 import { z } from 'zod';
 import { resolveModelConfig } from '../config.js';
 import { HttpModelProvider, ModelGateway } from '../model.js';
@@ -65,7 +66,7 @@ const inputSchema = z.discriminatedUnion('type', [
       baseUrl: z.url(),
       maxTurns: z.number().int().min(1).max(200),
       vision: z.boolean(),
-      apiKey: z.string().max(500).optional(),
+      theme: z.enum(['light', 'dark']).default('dark'),
     })
     .strict(),
   z.object({ type: z.literal('permissions') }).strict(),
@@ -95,14 +96,13 @@ let expanded = false;
 let ready = false;
 let settingsVisible = false;
 const settingsFile = join(profile, 'settings.json');
-const keyFile = join(profile, 'api-key.enc');
 let settings = {
   model: process.env['OPENAI_MODEL'] || 'gpt-6-luna',
   baseUrl: process.env['OPENAI_BASE_URL'] || 'https://api.openai.com/v1',
   maxTurns: 60,
   vision: true,
+  theme: 'dark' as 'light' | 'dark',
 };
-let storedKey = '';
 const state: Record<string, unknown> = {
   status: 'idle',
   ready: false,
@@ -225,9 +225,8 @@ async function startTask(instruction: string, mode: 'browser' | 'desktop', url?:
         ...process.env,
         OPENAI_MODEL: settings.model,
         OPENAI_BASE_URL: settings.baseUrl,
-        OPENAI_API_KEY: storedKey || process.env['OPENAI_API_KEY'],
+        OPENAI_API_KEY: process.env['OPENAI_API_KEY'],
       });
-  if (storedKey && config.keyEnv === 'OPENAI_API_KEY') process.env[config.keyEnv] = storedKey;
   if (config.keyEnv && !process.env[config.keyEnv]) throw new Error(`尚未设置 ${config.keyEnv}`);
   if (mode === 'desktop') {
     const permission = (await driver.run(['permissions'])) as {
@@ -379,6 +378,21 @@ async function startTask(instruction: string, mode: 'browser' | 'desktop', url?:
 }
 
 async function boot() {
+  // Finder-launched applications do not necessarily inherit the login shell environment.
+  if (process.platform === 'darwin' && !process.env['OPENAI_API_KEY']) {
+    try {
+      const { stdout } = await promisify(execFile)(
+        '/bin/zsh',
+        ['-lic', 'printenv OPENAI_API_KEY'],
+        {
+          timeout: 3000,
+          maxBuffer: 65536,
+        },
+      );
+      const key = stdout.trim().split('\n').at(-1)?.trim();
+      if (key) process.env['OPENAI_API_KEY'] = key;
+    } catch {}
+  }
   try {
     const parsed = JSON.parse(await readFile(settingsFile, 'utf8'));
     settings = z
@@ -387,17 +401,14 @@ async function boot() {
         baseUrl: z.url(),
         maxTurns: z.number().int().min(1).max(200),
         vision: z.boolean(),
+        theme: z.enum(['light', 'dark']).default('dark'),
       })
       .strict()
       .parse(parsed);
   } catch {}
-  try {
-    if (safeStorage.isEncryptionAvailable())
-      storedKey = safeStorage.decryptString(await readFile(keyFile));
-  } catch {}
   state['settings'] = settings;
   state['model'] = settings.model;
-  state['hasKey'] = Boolean(storedKey || process.env['OPENAI_API_KEY']);
+  state['hasKey'] = Boolean(process.env['OPENAI_API_KEY']);
   if (process.platform === 'darwin')
     app.dock?.setIcon(nativeImage.createFromPath(join(root, 'assets/icon.png')));
   try {
@@ -502,22 +513,17 @@ async function boot() {
               ))
           )
             throw new Error('模型地址需要 HTTPS 或本机 HTTP，且不能包含凭据');
-          if (command.apiKey) {
-            if (!safeStorage.isEncryptionAvailable())
-              throw new Error('系统安全存储不可用，请使用 OPENAI_API_KEY 环境变量');
-            await writeFile(keyFile, safeStorage.encryptString(command.apiKey), { mode: 0o600 });
-            storedKey = command.apiKey;
-          }
           settings = {
             model: command.model,
             baseUrl: command.baseUrl,
             maxTurns: command.maxTurns,
             vision: command.vision,
+            theme: command.theme,
           };
           await writeFile(settingsFile, JSON.stringify(settings, null, 2), { mode: 0o600 });
           state['settings'] = settings;
           state['model'] = settings.model;
-          state['hasKey'] = Boolean(storedKey || process.env['OPENAI_API_KEY']);
+          state['hasKey'] = Boolean(process.env['OPENAI_API_KEY']);
           publish();
           break;
         }

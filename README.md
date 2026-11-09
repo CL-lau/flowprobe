@@ -4,9 +4,11 @@
 
 ## 安装 DMG
 
-在 macOS 上运行 `npm run dmg` 生成 `release/FlowProbe-arm64.dmg`（Intel 机器生成对应 x64 文件）。打开 DMG，将 FlowProbe 拖入 Applications 即可安装。应用内“设置”可配置模型、API 地址、执行轮数、截图和加密保存 API Key。
+在 macOS 上运行 `npm run dmg` 生成 `release/FlowProbe-arm64.dmg`（Intel 机器生成对应 x64 文件）。打开 DMG，将 FlowProbe 拖入 Applications 即可安装。应用内“设置”可配置模型、API 地址、执行轮数、截图和普通／暗夜主题。
 
 当前构建使用本地临时签名，尚未使用 Apple Developer ID 签名和公证；分发到其他 Mac 前需要完成正式签名与公证。
+
+应用从本机环境变量读取 `OPENAI_API_KEY`。从 Finder 启动时，若启动环境没有该变量，应用会尝试从 zsh 登录环境读取；可将 `export OPENAI_API_KEY='你的密钥'` 配置在 `~/.zshrc` 中。
 
 ## 启动客户端
 

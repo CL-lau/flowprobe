@@ -55,6 +55,7 @@ function actionLabel(action = {}) {
 }
 function render(state) {
   current = state;
+  document.documentElement.dataset.theme = state.settings?.theme || 'dark';
   const busy = state.active || ['running', 'pausing', 'manual'].includes(state.status);
   document.documentElement.style.setProperty('--sidebar-width', `${state.sidebarWidth || 460}px`);
   document.body.className = `${state.expanded ? '' : 'collapsed'} ${state.status === 'running' ? 'running' : ''} ${state.status === 'manual' ? 'manual' : ''} ${state.status === 'error' ? 'error-state' : ''}`;
@@ -88,7 +89,7 @@ function render(state) {
   const s = values.screen_recording?.state;
   $('permission-state').textContent = state.hasKey
     ? `模型已配置 · 驱动辅助功能 ${a === 'granted' ? '✓' : a === 'denied' ? '未授权' : '待检查'} · 屏幕录制 ${s === 'granted' ? '✓' : s === 'denied' ? '未授权' : '待检查'}`
-    : '未配置 API Key；可在设置中添加或使用环境变量';
+    : '未配置 OPENAI_API_KEY；请在本机环境变量中设置';
   const messageKey = JSON.stringify(state.messages);
   if (messageKey !== lastMessages) {
     lastMessages = messageKey;
@@ -198,7 +199,6 @@ $('show-client').onclick = () => command({ type: 'show-client' });
 const settingsPanel = $('settings-panel');
 async function closeSettings() {
   settingsPanel.classList.add('hidden');
-  $('setting-key').value = '';
   await command({ type: 'settings-visible', visible: false });
 }
 $('settings-open').onclick = async () => {
@@ -212,7 +212,7 @@ $('settings-open').onclick = async () => {
   $('setting-base').value = settings.baseUrl;
   $('setting-turns').value = settings.maxTurns;
   $('setting-vision').checked = settings.vision;
-  $('setting-key').value = '';
+  $('setting-theme').value = settings.theme || 'dark';
   $('settings-error').textContent = '';
   settingsPanel.classList.remove('hidden');
   $('setting-model').focus();
@@ -227,7 +227,7 @@ $('settings-form').onsubmit = async (event) => {
     baseUrl: $('setting-base').value.trim().replace(/\/+$/, ''),
     maxTurns: Number($('setting-turns').value),
     vision: $('setting-vision').checked,
-    ...($('setting-key').value ? { apiKey: $('setting-key').value } : {}),
+    theme: $('setting-theme').value,
   });
   if (!result.ok) {
     $('settings-error').textContent = result.error;

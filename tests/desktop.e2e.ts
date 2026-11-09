@@ -237,6 +237,7 @@ test(
       await ui.locator('#setting-base').fill('https://example.com/v1');
       await ui.locator('#setting-turns').fill('12');
       await ui.locator('#setting-vision').uncheck();
+      await ui.locator('#setting-theme').selectOption('light');
       await ui.getByRole('button', { name: '保存设置' }).click();
       await expect(ui.locator('#settings-panel')).toBeHidden();
       await app.close();
@@ -256,7 +257,8 @@ test(
       await expect(ui.locator('#setting-base')).toHaveValue('https://example.com/v1');
       await expect(ui.locator('#setting-turns')).toHaveValue('12');
       await expect(ui.locator('#setting-vision')).not.toBeChecked();
-      await expect(ui.locator('#setting-key')).toHaveValue('');
+      await expect(ui.locator('#setting-theme')).toHaveValue('light');
+      await expect(ui.locator('html')).toHaveAttribute('data-theme', 'light');
     } finally {
       await app?.close();
       await rm(temporary, { recursive: true, force: true });
